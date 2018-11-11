@@ -1,0 +1,11 @@
+item_id,product_name,department_name,price,stock_quantity
+1,Bulbasaur,Kanto,10,50
+2,Charmander,Kanto,10,50
+3,Squirtle,Kanto,10,50
+4,Chikorita,Johto,15,40
+5,Cyndaquil,Johto,15,40
+6,Totodile,Johto,15,40
+7,Treecko,Hoenn,20,30
+8,Torchic,Hoenn,20,30
+9,Mudkip,Hoenn,20,30
+10,Pikachu,Kanto,25,25

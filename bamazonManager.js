@@ -31,8 +31,8 @@ function start () {
         ],
 		message: "Welcome Bamazon Manager. What would you like to do?"
       })
-      .then(function(answer) {
-        switch (answer.action) {
+      .then(function(answer) {    
+        switch (answer.command) {
         case "View Pokemon for Sale":
           viewPokemon();
           break;
@@ -102,7 +102,8 @@ function addInventory () {
 		var query = "SELECT * FROM products";
 		connection.query(query, function(err, res) {
 
-			var n = (parseInt(answer.id)).toString();
+            var n = (parseInt(answer.id)).toString();
+            var target;
 			if (answer.id !== n) {
 				console.log(chalk.red("ERROR: ID# IS INVALID. PLEASE TRY AGAIN."));
 				start();
@@ -110,7 +111,8 @@ function addInventory () {
 				var flag = 0;
 				for (var i = 0; i < res.length; i++) {
 					if (pokeID == res[i].item_id) {
-						flag = 1;
+                        flag = 1;
+                        target = i;
 					}
 				}
 
@@ -126,19 +128,17 @@ function addInventory () {
                             message: "How many of this Pokemon would you add?"
                         }
                         ]).then(function(answer) {
-                            var newStock = res[0].stock_quantity;
-                            newStock += answer.add;
+                            var newStock = parseInt(res[target].stock_quantity);
+                            newStock += parseInt(answer.add);
                             
-                            var query = "UPDATE products SET ? WHERE ?";
-                            connection.query(query, [{stock_quantity: newStock}, {item_id: pokeID}], function (err, res) {
+                            connection.query("UPDATE products SET ? WHERE ?", [{stock_quantity: newStock}, {item_id: pokeID}], function (err, res) {
                                 if (err) {
                                     throw err;
                                 }
-                                console.log(chalk.green("\nInventory has been updated."));
-                                console.log("\n");
-                            })
-                        exit();
-                    });					
+                                console.log(chalk.green("\nInventory has been updated.\n"));
+                                exit();
+                        })
+                    });				
 				}
 			}
 		})
@@ -146,8 +146,9 @@ function addInventory () {
 }
 
 function addPokemon () {
-    inquirer
-        .prompt({
+    inquirer.prompt([
+
+        {
             type: "input",
             name: "name",
             message: "What is the name of the Pokemon you'd like to add?"
@@ -166,33 +167,41 @@ function addPokemon () {
             type: "input",
             name: "quantity",
             message: "How much of this Pokemon would you like to add to inventory?"
-        })
-        .then(function(answer) {
+        }
+
+        ]).then(function(answer) {
+
         var query = "SELECT * FROM products";
             connection.query(query, function(err, res) {
                 if (err) {
                     throw err;
                 }
+            
+            var flag = 0;
             for (var i = 0; i < res.length; i++) {
                 if(answer.name === res[i].product_name) {
-                    console.log(chalk.yellow("This Pokemon is already in the system. Please try again."));
-                    addPokemon();
-                } else {
-                    connection.query("INSERT INTO products SET ?", 
-                    {
-                        product_name: answer.name,
-                        department_name: answer.region,
-                        price: answer.price,
-                        stock_quantity: answers.quantity
-                    },
-                    function(err, res) {
+                    flag = 1;
+                }
+            } 
+                
+            if (flag === 1) {
+                console.log(chalk.yellow("This Pokemon is already in the system. Please try again."));
+                addPokemon();
+            } else {
+                connection.query("INSERT INTO products SET ?", 
+                {
+                    product_name: answer.name,
+                    department_name: answer.region,
+                    price: answer.price,
+                    stock_quantity: answer.quantity
+                },
+                function(err, res) {
+                    console.log(chalk.green("\nPokemon successfully added!\n"));
+                    exit();
                         if (err) {
                             throw err;
                         }
-                    console.log(chalk.green("\nPokemon successfully added!"));
-                    exit();
-                    });
-                }
+                });
             }
         });
     });
@@ -210,7 +219,7 @@ function exit () {
             message: "What would you like to do now?"
         })
         .then(function(answer) {
-            switch (answer.action) {
+            switch (answer.command) {
             case "Back to menu.":
             start();
             break;
