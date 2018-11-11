@@ -27,113 +27,62 @@ function displayAll () {
 		console.log(chalk.blue("---------------------------------------------------"));
 	}
 	console.log("\n");
-	// start();
+	start();
 	});
-	connection.end();
 };
 
-// function start () {
-// 	inquirer.prompt([
-// 	{
-// 		type: "input",
-// 		name: "id",
-// 		message: "What is the ID of the starter pokemon you would like to buy?",
-// 		validate: function (answer) {
-// 			return new Promise ((resolve, reject) => {
-// 				var query = "SELECT item_id FROM products";
-// 				connection.query(query, function(err, res) {
-// 					if (err) {throw err;}
-// 					var flag = false;
-// 					for (var i in res) {
-// 						if (res[i].item_id == answer) {
-// 							flag = true;
-// 							break;
-// 						}
-// 					}
-// 					if (flag) {
-// 						resolve(true);
-// 					}
-// 					else {
-// 						reject('ID UNKNOWN');
-// 					}
-// 				})
-// 			})
-// 		}
-// 	},
-// 	{
-// 		type: "input",
-// 		name: "quantity",
-// 		message: "How many of this pokemon would you like?",
-// 		validate: function (answer) {
-// 			var input = answer;
-// 			return new Promise ((resolve, reject) => {
-// 				var check = isNaN(input);
-// 				var flag = false;
-// 				if (check) {
-// 					flag = false;
-// 				}
-// 				else {flag = true;}
+function start () {
+	inquirer.prompt([
+		{
+			type: "input",
+			name: "id",
+			message: "What is the ID of the starter pokemon you would like to buy?",
+		}
+	]).then(function(answer) {
+		var pokeID = parseFloat(answer.id);
 
-// 				if (flag) {
-// 					resolve(true);
-// 				}
-// 				else {
-// 					reject('Not a valid quantity');
-// 				}
-// 			})
-// 		}
-// 	}
-// 	]).then(function(answers) {
-// 		var oldStock = 0;
-// 		var newStock = 0;
-// 		var oldPurchased = 0;
-// 		var purchased = 0;
-// 		var id;
-// 		connection.query("SELECT * FROM products WHERE ?", 
-// 			{
-// 				item_id: answers.id
-// 			},
-// 			(err, results, fields) => {
-// 				if (err) {throw err;}
-// 				else {
-// 					oldStock = results[0].stock_quantity;
-// 					newStock = oldStock - answers.quantity;
-// 					oldPurchased = results[0].product_sales;
-// 					purchased = answers.quantity * results[0].price;
-// 					id = answers.id;
-// 					if (newStock > -1) {
-// 						connection.query("UPDATE products SET ? WHERE ?",
-// 							[{
-// 						 		stock_quantity: newStock
-// 						 	},
-// 						 	{
-// 						 		item_id: answers.id
-// 						 	}],
-// 						 	(err, results, fields) => {
-// 						 		if (err) {throw err;}
-// 						 		else{
-// 						 			console.log("Tickets purchased!")
-// 						 			var newPurchased = parseInt(oldPurchased) + parseInt(purchased);
-// 						 			connection.query("UPDATE products SET ? WHERE ?",
-// 						 				[{
-// 						 					product_sales: newPurchased
-// 						 				},
-// 						 				{
-// 						 					item_id: id
-// 						 				}],
-// 						 				(err, results, fields) => {
-// 						 					if (err) {throw err;}
-// 						 					console.log("Quantity updated");
-// 						 					displayAll();
-// 						 				})
-// 						 		}
-// 							})
-// 					}
-// 					else {
-// 						console.log("Insufficient quantity!");
-// 						displayAll();
-// 					}
-// 				}
-// 			})
-// 	});
-// }
+		if ((pokeID - Math.floor(pokeID)) !== 0) {
+			console.log(chalk.red("ERROR: ID# DOES NOT EXIST. PLEASE TRY AGAIN."));
+			start();
+		} else if (pokeID < 1 || pokeID > 10) {
+			console.log(chalk.red("ERROR: ID# DOES NOT EXIST. PLEASE TRY AGAIN."));
+			start();
+		} else {
+			inquirer.prompt([
+			{
+				type: "input",
+				name: "quantity",
+				message: "How many of this Pokemon would you like to buy?"
+			}
+			]).then(function(answer) {
+				var query = "SELECT * FROM products WHERE ?";
+				connection.query(query, {item_id: pokeID}, function (err, res) {
+					if (err) {
+						throw err;
+					}
+		
+					var newStock = res[0].stock_quantity;
+					newStock -= answer.quantity;
+		
+					if (newStock < 0) {
+						console.log(chalk.yellow("Insufficient quantity! Try again please."));
+						start();
+					} else {
+						var price = res[0].price;
+						price *= answer.quantity;
+						
+						var query = "UPDATE products SET ? WHERE ?";
+						connection.query(query, [{ stock_quantity: newStock }, { item_id: pokeID }], function (err) {
+							if (err) {
+								throw err;
+							}
+							console.log(chalk.green("\nTotal: $" + price));
+							console.log(chalk.yellow("Thank you shopping with us! We catch'em all, so you don't have to!\n"));
+							connection.end();
+						})
+					}
+				})
+			});	
+		}
+	});
+}
