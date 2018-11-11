@@ -106,7 +106,7 @@ function addInventory () {
             var target;
 			if (answer.id !== n) {
 				console.log(chalk.red("ERROR: ID# IS INVALID. PLEASE TRY AGAIN."));
-				start();
+				addInventory();
 			} else {
 				var flag = 0;
 				for (var i = 0; i < res.length; i++) {
@@ -118,7 +118,7 @@ function addInventory () {
 
 				if (flag == 0) {
 					console.log(chalk.red("ERROR: ID# DOES NOT EXIST. PLEASE TRY AGAIN."));
-					start();
+					addInventory();
 				} else {
                     inquirer
                     .prompt([
